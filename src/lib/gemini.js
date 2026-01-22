@@ -77,10 +77,15 @@ Guidelines:
     return analysis;
   } catch (error) {
     console.error('Gemini AI analysis error:', error);
+    console.error('Error details:', {
+      message: error.message,
+      stack: error.stack,
+      name: error.name,
+    });
 
-    // Return a default response if AI fails
+    // Return a default response if AI fails with detailed error
     return {
-      summaryEnglish: 'Unable to analyze the report at this time. Please consult with your healthcare provider for a detailed analysis.',
+      summaryEnglish: `Unable to analyze the report at this time. Error: ${error.message}. Please consult with your healthcare provider for a detailed analysis.`,
       summaryUrdu: 'Is waqt report ka analysis mumkin nahi hai. Behtar hoga ke aap apne doctor se baat karein.',
       abnormalValues: [],
       questionsToAsk: [{ question: 'Please review this report with me and explain any concerns.' }],
