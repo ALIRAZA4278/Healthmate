@@ -38,7 +38,7 @@ export default function Home() {
                 <span className="text-white text-xl font-bold">H</span>
               </div>
               <span className="text-xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-                HealthMate
+                HealthMatee
               </span>
             </div>
             <div className="hidden md:flex items-center gap-8">
