@@ -5,6 +5,7 @@ import { useState } from 'react';
 
 export default function Home() {
   const [activeTestimonial, setActiveTestimonial] = useState(0);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const testimonials = [
     {
@@ -52,7 +53,7 @@ export default function Home() {
                 Testimonials
               </a>
             </div>
-            <div className="flex items-center gap-4">
+            <div className="hidden md:flex items-center gap-4">
               <Link
                 href="/login"
                 className="text-gray-700 hover:text-indigo-600 font-medium transition-colors"
@@ -66,16 +67,44 @@ export default function Home() {
                 Get Started Free
               </Link>
             </div>
+            {/* Mobile hamburger */}
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="md:hidden p-2 rounded-lg text-gray-700 hover:bg-gray-100 transition"
+              aria-label="Toggle menu"
+            >
+              {mobileMenuOpen ? (
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              ) : (
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+              )}
+            </button>
           </div>
         </div>
+        {/* Mobile menu dropdown */}
+        {mobileMenuOpen && (
+          <div className="md:hidden border-t border-gray-200 bg-white px-4 py-4 space-y-3">
+            <a href="#features" onClick={() => setMobileMenuOpen(false)} className="block text-gray-700 hover:text-indigo-600 font-medium py-2">Features</a>
+            <a href="#how-it-works" onClick={() => setMobileMenuOpen(false)} className="block text-gray-700 hover:text-indigo-600 font-medium py-2">How It Works</a>
+            <a href="#testimonials" onClick={() => setMobileMenuOpen(false)} className="block text-gray-700 hover:text-indigo-600 font-medium py-2">Testimonials</a>
+            <div className="pt-2 border-t border-gray-100 flex flex-col gap-2">
+              <Link href="/login" className="text-center py-2 text-indigo-600 font-medium border border-indigo-600 rounded-lg hover:bg-indigo-50 transition">Login</Link>
+              <Link href="/register" className="text-center py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg font-medium">Get Started Free</Link>
+            </div>
+          </div>
+        )}
       </nav>
 
       {/* Hero Section */}
       <section className="pt-32 pb-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 relative overflow-hidden">
         {/* Background Pattern */}
-        <div className="absolute inset-0 opacity-5">
-          <div className="absolute top-0 left-0 w-96 h-96 bg-indigo-500 rounded-full filter blur-3xl"></div>
-          <div className="absolute bottom-0 right-0 w-96 h-96 bg-purple-500 rounded-full filter blur-3xl"></div>
+        <div className="absolute inset-0 opacity-5 overflow-hidden">
+          <div className="absolute top-0 left-0 w-48 sm:w-96 h-48 sm:h-96 bg-indigo-500 rounded-full filter blur-3xl"></div>
+          <div className="absolute bottom-0 right-0 w-48 sm:w-96 h-48 sm:h-96 bg-purple-500 rounded-full filter blur-3xl"></div>
         </div>
 
         <div className="max-w-7xl mx-auto relative z-10">
@@ -127,7 +156,7 @@ export default function Home() {
             </div>
 
             {/* Trust Indicators */}
-            <div className="flex flex-wrap justify-center items-center gap-8 text-sm text-gray-600">
+            <div className="flex flex-wrap justify-center items-center gap-4 sm:gap-8 text-sm text-gray-600">
               <div className="flex items-center gap-2">
                 <svg className="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
@@ -144,7 +173,7 @@ export default function Home() {
                 <svg className="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                 </svg>
-                <span className="font-medium">Gemini 2.5 AI Powered</span>
+                <span className="font-medium">GPT-4o AI Powered</span>
               </div>
               <div className="flex items-center gap-2">
                 <svg className="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
@@ -160,7 +189,7 @@ export default function Home() {
       {/* Stats Section */}
       <section className="py-16 px-4 sm:px-6 lg:px-8 bg-white border-b">
         <div className="max-w-7xl mx-auto">
-          <div className="grid md:grid-cols-4 gap-8 text-center">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8 text-center">
             <div className="p-6">
               <div className="text-4xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-2">
                 100%
@@ -177,7 +206,7 @@ export default function Home() {
               <div className="text-4xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-2">
                 AI
               </div>
-              <div className="text-gray-600 font-medium">Gemini 2.5 Powered</div>
+              <div className="text-gray-600 font-medium">GPT-4o Powered</div>
             </div>
             <div className="p-6">
               <div className="text-4xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-2">
@@ -193,7 +222,7 @@ export default function Home() {
       <section id="features" className="py-20 px-4 sm:px-6 lg:px-8 bg-gray-50">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
               Powerful Features for Better Health Management
             </h2>
             <p className="text-xl text-gray-600">
@@ -201,9 +230,9 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-6 md:gap-8">
             {/* Feature 1 */}
-            <div className="group relative bg-white p-8 rounded-2xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 border border-gray-100">
+            <div className="group relative bg-white p-5 sm:p-8 rounded-2xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 border border-gray-100">
               <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-bl-full opacity-50"></div>
               <div className="text-5xl mb-6">📄</div>
               <h3 className="text-2xl font-bold text-gray-900 mb-4">
@@ -229,14 +258,14 @@ export default function Home() {
             </div>
 
             {/* Feature 2 */}
-            <div className="group relative bg-white p-8 rounded-2xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 border border-gray-100">
+            <div className="group relative bg-white p-5 sm:p-8 rounded-2xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 border border-gray-100">
               <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-purple-100 to-pink-100 rounded-bl-full opacity-50"></div>
               <div className="text-5xl mb-6">🤖</div>
               <h3 className="text-2xl font-bold text-gray-900 mb-4">
                 AI-Powered Analysis
               </h3>
               <p className="text-gray-600 leading-relaxed mb-4">
-                Get instant AI-powered explanations in both English and Roman Urdu using Google Gemini 2.5 Flash AI
+                Get instant AI-powered explanations in both English and Roman Urdu using OpenAI GPT-4o AI
               </p>
               <ul className="space-y-2 text-sm text-gray-600">
                 <li className="flex items-center gap-2">
@@ -255,7 +284,7 @@ export default function Home() {
             </div>
 
             {/* Feature 3 */}
-            <div className="group relative bg-white p-8 rounded-2xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 border border-gray-100">
+            <div className="group relative bg-white p-5 sm:p-8 rounded-2xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 border border-gray-100">
               <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-green-100 to-emerald-100 rounded-bl-full opacity-50"></div>
               <div className="text-5xl mb-6">📊</div>
               <h3 className="text-2xl font-bold text-gray-900 mb-4">
@@ -281,7 +310,7 @@ export default function Home() {
             </div>
 
             {/* Feature 4 */}
-            <div className="group relative bg-white p-8 rounded-2xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 border border-gray-100">
+            <div className="group relative bg-white p-5 sm:p-8 rounded-2xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 border border-gray-100">
               <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-yellow-100 to-orange-100 rounded-bl-full opacity-50"></div>
               <div className="text-5xl mb-6">❓</div>
               <h3 className="text-2xl font-bold text-gray-900 mb-4">
@@ -307,7 +336,7 @@ export default function Home() {
             </div>
 
             {/* Feature 5 */}
-            <div className="group relative bg-white p-8 rounded-2xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 border border-gray-100">
+            <div className="group relative bg-white p-5 sm:p-8 rounded-2xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 border border-gray-100">
               <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-red-100 to-pink-100 rounded-bl-full opacity-50"></div>
               <div className="text-5xl mb-6">🍎</div>
               <h3 className="text-2xl font-bold text-gray-900 mb-4">
@@ -333,7 +362,7 @@ export default function Home() {
             </div>
 
             {/* Feature 6 */}
-            <div className="group relative bg-white p-8 rounded-2xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 border border-gray-100">
+            <div className="group relative bg-white p-5 sm:p-8 rounded-2xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 border border-gray-100">
               <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-teal-100 to-cyan-100 rounded-bl-full opacity-50"></div>
               <div className="text-5xl mb-6">🏠</div>
               <h3 className="text-2xl font-bold text-gray-900 mb-4">
@@ -365,7 +394,7 @@ export default function Home() {
       <section id="how-it-works" className="py-20 px-4 sm:px-6 lg:px-8 bg-white">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
               How HealthMate Works
             </h2>
             <p className="text-xl text-gray-600">
@@ -373,7 +402,7 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-8">
             <div className="text-center">
               <div className="relative inline-block mb-6">
                 <div className="w-20 h-20 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-full flex items-center justify-center text-white text-3xl font-bold shadow-xl">
@@ -396,7 +425,7 @@ export default function Home() {
               </div>
               <h3 className="text-2xl font-bold text-gray-900 mb-3">AI Analysis</h3>
               <p className="text-gray-600">
-                Our Gemini AI analyzes your report and generates bilingual summaries with abnormal values highlighted
+                Our GPT-4o AI analyzes your report and generates bilingual summaries with abnormal values highlighted
               </p>
             </div>
 
@@ -419,11 +448,11 @@ export default function Home() {
       {/* Benefits Section */}
       <section className="py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-indigo-50 to-purple-50">
         <div className="max-w-7xl mx-auto">
-          <div className="bg-white rounded-3xl shadow-2xl p-12">
-            <h2 className="text-4xl font-bold text-gray-900 mb-12 text-center">
+          <div className="bg-white rounded-3xl shadow-2xl p-6 sm:p-8 md:p-12">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-8 md:mb-12 text-center">
               What HealthMate Provides
             </h2>
-            <div className="grid md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
               {[
                 { icon: '📝', title: 'Simple Summaries', desc: 'Easy-to-understand explanations in both English and Roman Urdu' },
                 { icon: '⚠️', title: 'Highlight Abnormal Values', desc: 'Quickly identify which values are out of normal range with color coding' },
@@ -449,7 +478,7 @@ export default function Home() {
       <section id="testimonials" className="py-20 px-4 sm:px-6 lg:px-8 bg-white">
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
               What Our Users Say
             </h2>
             <p className="text-xl text-gray-600">
@@ -458,7 +487,7 @@ export default function Home() {
           </div>
 
           <div className="relative">
-            <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-3xl p-12 shadow-xl">
+            <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-3xl p-6 sm:p-8 md:p-12 shadow-xl">
               <div className="text-center">
                 <div className="text-6xl mb-6">{testimonials[activeTestimonial].image}</div>
                 <p className="text-xl text-gray-700 mb-6 italic">
@@ -531,7 +560,7 @@ export default function Home() {
       {/* Footer */}
       <footer className="bg-gray-900 text-gray-300 py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
-          <div className="grid md:grid-cols-4 gap-8 mb-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8 mb-8">
             <div className="col-span-2">
               <div className="flex items-center gap-2 mb-4">
                 <div className="w-8 h-8 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-lg flex items-center justify-center">
@@ -570,7 +599,7 @@ export default function Home() {
 
           <div className="border-t border-gray-800 pt-8 text-center">
             <p className="text-sm text-gray-500">
-              Built with ❤️ by   Students | Powered by Gemini 2.5 AI
+              Built with ❤️ by Students | Powered by GPT-4o AI
             </p>
             <p className="text-sm text-gray-500 mt-2">
               © 2025 HealthMate. All rights reserved.

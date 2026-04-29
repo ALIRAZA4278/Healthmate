@@ -221,11 +221,11 @@ export default function DashboardPage() {
                 <p className="text-xs text-gray-500">Sehat ka Smart Dost</p>
               </div>
             </Link>
-            <div className="flex items-center gap-4">
-              <span className="text-gray-700">Hello, <strong>{user?.name}</strong></span>
+            <div className="flex items-center gap-3">
+              <span className="hidden sm:inline text-gray-700 truncate max-w-[150px]">Hello, <strong>{user?.name}</strong></span>
               <button
                 onClick={handleLogout}
-                className="text-gray-700 hover:text-red-600 font-medium transition-colors"
+                className="text-gray-700 hover:text-red-600 font-medium transition-colors whitespace-nowrap"
               >
                 Logout
               </button>
@@ -234,12 +234,21 @@ export default function DashboardPage() {
         </div>
       </nav>
 
+      {/* Quick Nav */}
+      <div className="bg-white border-b border-gray-200 px-4 overflow-x-auto">
+        <div className="max-w-7xl mx-auto flex gap-1 py-1">
+          <Link href="/dashboard/upload" className="flex-shrink-0 px-3 py-2 text-sm text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg font-medium transition whitespace-nowrap">+ Upload Report</Link>
+          <Link href="/dashboard/vitals" className="flex-shrink-0 px-3 py-2 text-sm text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg font-medium transition whitespace-nowrap">+ Add Vitals</Link>
+          <Link href="/dashboard/timeline" className="flex-shrink-0 px-3 py-2 text-sm text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg font-medium transition whitespace-nowrap">📅 Timeline</Link>
+        </div>
+      </div>
+
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Family Members Section */}
         <div className="mb-8">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-2xl font-bold text-gray-900">Family Members</h2>
+          <div className="flex flex-wrap justify-between items-center gap-2 mb-4">
+            <h2 className="text-xl md:text-2xl font-bold text-gray-900">Family Members</h2>
             <button
               onClick={() => setShowAddMember(true)}
               className="bg-indigo-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-indigo-700 transition flex items-center gap-2"
@@ -248,7 +257,7 @@ export default function DashboardPage() {
             </button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {familyMembers.map((member) => (
               <div
                 key={member._id}
@@ -339,7 +348,7 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            <div className="flex gap-6 mt-4 text-sm">
+            <div className="flex flex-wrap gap-4 mt-4 text-sm">
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 bg-orange-400 rounded"></div>
                 <span className="text-gray-600">Diastolic</span>
@@ -358,7 +367,7 @@ export default function DashboardPage() {
 
         {/* Search and Filter */}
         <div className="bg-white rounded-lg shadow-sm p-4 mb-6 border border-gray-200">
-          <div className="grid md:grid-cols-5 gap-3">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
             <input
               type="text"
               placeholder="Search reports..."
@@ -399,7 +408,7 @@ export default function DashboardPage() {
 
             <button
               onClick={() => { setSearchTerm(''); setFilterDate({ from: '', to: '' }); setFilterFamilyMember(''); }}
-              className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition"
+              className="col-span-2 md:col-span-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition"
             >
               Clear
             </button>
@@ -408,8 +417,8 @@ export default function DashboardPage() {
 
         {/* Reports Table */}
         <div className="bg-white rounded-lg shadow-sm p-6 mb-8 border border-gray-200">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold text-gray-900">Medical Reports</h2>
+          <div className="flex flex-wrap justify-between items-center gap-2 mb-6">
+            <h2 className="text-xl md:text-2xl font-bold text-gray-900">Medical Reports</h2>
             <Link
               href="/dashboard/upload"
               className="bg-indigo-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-indigo-700 transition flex items-center gap-2"

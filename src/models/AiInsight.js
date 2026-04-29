@@ -20,7 +20,21 @@ const aiInsightSchema = new mongoose.Schema(
       type: String,
       required: [true, 'Urdu summary is required'],
     },
+    urgencyLevel: {
+      type: String,
+      enum: ['normal', 'monitor', 'urgent'],
+      default: 'normal',
+    },
+    urgencyReason: {
+      type: String,
+    },
+    keyFindings: [{
+      type: String,
+    }],
     abnormalValues: [{
+      type: String,
+    }],
+    normalValues: [{
       type: String,
     }],
     questionsToAsk: [{
@@ -47,6 +61,15 @@ const aiInsightSchema = new mongoose.Schema(
         required: true,
       },
     }],
+    lifestyleRecommendations: [{
+      type: String,
+    }],
+    warningSignsToWatch: [{
+      type: String,
+    }],
+    followUpRecommendations: {
+      type: String,
+    },
     disclaimer: {
       type: String,
       default: 'This AI analysis is for informational purposes only and should not replace professional medical advice. Please consult with your healthcare provider for proper diagnosis and treatment.',

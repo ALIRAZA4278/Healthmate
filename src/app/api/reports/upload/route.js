@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { withAuth } from '@/lib/middleware';
 import { uploadToCloudinary } from '@/lib/cloudinary';
-import { analyzeMedicalReport } from '@/lib/gemini';
+import { analyzeMedicalReport } from '@/lib/openai';
 import File from '@/models/File';
 import AiInsight from '@/models/AiInsight';
 
@@ -86,12 +86,19 @@ async function handler(request) {
       await AiInsight.create({
         fileId: fileRecord._id,
         userId,
+        urgencyLevel: aiAnalysis.urgencyLevel || 'normal',
+        urgencyReason: aiAnalysis.urgencyReason || '',
         summaryEnglish: aiAnalysis.summaryEnglish,
         summaryUrdu: aiAnalysis.summaryUrdu,
+        keyFindings: aiAnalysis.keyFindings || [],
         abnormalValues: aiAnalysis.abnormalValues || [],
+        normalValues: aiAnalysis.normalValues || [],
         questionsToAsk: aiAnalysis.questionsToAsk || [],
         foodRecommendations: aiAnalysis.foodRecommendations || { avoid: [], recommended: [] },
         homeRemedies: aiAnalysis.homeRemedies || [],
+        lifestyleRecommendations: aiAnalysis.lifestyleRecommendations || [],
+        warningSignsToWatch: aiAnalysis.warningSignsToWatch || [],
+        followUpRecommendations: aiAnalysis.followUpRecommendations || '',
         disclaimer: aiAnalysis.disclaimer,
       });
     } catch (aiError) {

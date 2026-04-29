@@ -114,31 +114,31 @@ export default function FamilyMemberPage() {
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Member Header */}
-        <div className="bg-white rounded-2xl shadow-sm p-8 mb-8 border border-gray-100">
-          <div className="flex items-center gap-6">
+        <div className="bg-white rounded-2xl shadow-sm p-4 sm:p-6 md:p-8 mb-8 border border-gray-100">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4">
             <div
-              className="w-24 h-24 rounded-2xl flex items-center justify-center text-white text-4xl shadow-lg"
+              className="w-16 h-16 sm:w-24 sm:h-24 rounded-2xl flex items-center justify-center text-white text-3xl sm:text-4xl shadow-lg flex-shrink-0"
               style={{ backgroundColor: member.color }}
             >
               👤
             </div>
-            <div className="flex-1">
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">{member.name}</h1>
-              <p className="text-xl text-gray-600 mb-1">{member.relation}</p>
+            <div className="flex-1 min-w-0">
+              <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-1">{member.name}</h1>
+              <p className="text-lg text-gray-600 mb-1">{member.relation}</p>
               {member.customId && (
                 <p className="text-sm text-gray-500">ID: {member.customId}</p>
               )}
             </div>
-            <div className="flex gap-3">
+            <div className="flex flex-wrap gap-2 sm:gap-3 sm:flex-shrink-0">
               <Link
                 href="/dashboard/upload"
-                className="px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg font-semibold hover:shadow-lg transition"
+                className="px-4 py-2 sm:px-6 sm:py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg font-semibold hover:shadow-lg transition text-sm sm:text-base"
               >
                 + Add Report
               </Link>
               <Link
                 href="/dashboard/vitals"
-                className="px-6 py-3 border-2 border-indigo-600 text-indigo-600 rounded-lg font-semibold hover:bg-indigo-50 transition"
+                className="px-4 py-2 sm:px-6 sm:py-3 border-2 border-indigo-600 text-indigo-600 rounded-lg font-semibold hover:bg-indigo-50 transition text-sm sm:text-base"
               >
                 + Add Vitals
               </Link>
@@ -147,7 +147,7 @@ export default function FamilyMemberPage() {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid md:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6 mb-8">
           <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center text-2xl">
@@ -191,8 +191,8 @@ export default function FamilyMemberPage() {
 
         {/* Medical Reports */}
         <div className="bg-white rounded-2xl shadow-sm p-6 mb-8 border border-gray-100">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold text-gray-900">Medical Reports</h2>
+          <div className="flex flex-wrap justify-between items-center gap-2 mb-6">
+            <h2 className="text-xl md:text-2xl font-bold text-gray-900">Medical Reports</h2>
             <Link
               href="/dashboard/upload"
               className="text-indigo-600 hover:text-indigo-700 font-medium"
@@ -257,8 +257,8 @@ export default function FamilyMemberPage() {
 
         {/* Vitals Section */}
         <div className="bg-white rounded-2xl shadow-sm p-6 border border-gray-100">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold text-gray-900">Recent Vitals</h2>
+          <div className="flex flex-wrap justify-between items-center gap-2 mb-6">
+            <h2 className="text-xl md:text-2xl font-bold text-gray-900">Recent Vitals</h2>
             <Link
               href="/dashboard/vitals"
               className="text-indigo-600 hover:text-indigo-700 font-medium"
