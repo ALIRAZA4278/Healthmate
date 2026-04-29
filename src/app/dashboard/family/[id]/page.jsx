@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
-import { auth, reportsAPI, vitalsAPI } from '@/lib/api';
+import { auth, reportsAPI, vitalsAPI, familyMembersAPI } from '@/lib/api';
 
 export default function FamilyMemberPage() {
   const router = useRouter();
@@ -24,21 +24,12 @@ export default function FamilyMemberPage() {
 
   const loadMemberData = async () => {
     try {
-      // Get member from localStorage
-      const savedMembers = localStorage.getItem('familyMembers');
-      if (savedMembers) {
-        const members = JSON.parse(savedMembers);
-        const foundMember = members.find((m) => m.id === params.id);
-        if (foundMember) {
-          setMember(foundMember);
-        }
-      }
-
-      // Load all reports and vitals (in future, filter by family member)
-      const [reportsData, vitalsData] = await Promise.all([
+      const [memberData, reportsData, vitalsData] = await Promise.all([
+        familyMembersAPI.getById(params.id),
         reportsAPI.getAll(),
         vitalsAPI.getAll(),
       ]);
+      setMember(memberData.data || memberData);
       setReports(reportsData.reports || []);
       setVitals(vitalsData.vitals || []);
     } catch (error) {
