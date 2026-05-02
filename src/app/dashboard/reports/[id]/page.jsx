@@ -39,6 +39,8 @@ export default function ViewReportPage() {
   const [insight, setInsight] = useState(null);
   const [loading, setLoading] = useState(true);
   const [language, setLanguage] = useState('english');
+  const [analyzing, setAnalyzing] = useState(false);
+  const [analyzeError, setAnalyzeError] = useState('');
 
   useEffect(() => {
     if (!auth.isAuthenticated()) {
@@ -59,6 +61,35 @@ export default function ViewReportPage() {
       console.error('Error loading report:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleReanalyze = async () => {
+    if (!report) return;
+    setAnalyzing(true);
+    setAnalyzeError('');
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch('/api/reports/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          reportId: report._id,
+          fileUrl: report.fileUrl,
+          mimeType: report.fileUrl.toLowerCase().endsWith('.pdf') ? 'application/pdf' : 'image/jpeg',
+          fileType: report.fileType,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setInsight(data.data);
+      } else {
+        setAnalyzeError(data.message || 'Analysis failed. Please try again.');
+      }
+    } catch (err) {
+      setAnalyzeError('Network error. Please try again.');
+    } finally {
+      setAnalyzing(false);
     }
   };
 
@@ -464,10 +495,29 @@ export default function ViewReportPage() {
             ) : (
               <div className="bg-white rounded-2xl shadow-sm p-6 md:p-12 text-center border border-gray-100">
                 <div className="text-6xl mb-4">🤖</div>
-                <p className="text-gray-500 text-lg">No AI analysis available for this report</p>
-                <p className="text-gray-400 text-sm mt-2">
-                  The report may still be processing or there was an error during analysis.
+                <p className="text-gray-500 text-lg font-semibold">No AI Analysis Available</p>
+                <p className="text-gray-400 text-sm mt-2 mb-6">
+                  Analysis upload ke time fail ho gayi. Neeche button se dobara try karein.
                 </p>
+                {analyzeError && (
+                  <p className="text-red-500 text-sm mb-4 bg-red-50 border border-red-200 rounded-lg px-4 py-2">
+                    {analyzeError}
+                  </p>
+                )}
+                <button
+                  onClick={handleReanalyze}
+                  disabled={analyzing}
+                  className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-8 py-3 rounded-xl font-semibold hover:shadow-lg transition disabled:opacity-60 disabled:cursor-not-allowed flex items-center gap-2 mx-auto"
+                >
+                  {analyzing ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      Analyzing... (may take 30–60 sec)
+                    </>
+                  ) : (
+                    <>🔄 Re-Analyze with AI</>
+                  )}
+                </button>
               </div>
             )}
           </div>

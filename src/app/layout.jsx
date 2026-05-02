@@ -1,4 +1,5 @@
 import './globals.css';
+import CookieConsent from '@/components/CookieConsent';
 
 export const metadata = {
   title: 'HealthMate - Sehat ka Smart Dost',
@@ -18,6 +19,7 @@ export default function RootLayout({ children }) {
         />
       </head>
       <body className="min-h-screen bg-gray-50 font-sans antialiased">
+        <CookieConsent />
         {children}
       </body>
     </html>
