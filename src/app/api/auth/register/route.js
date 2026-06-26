@@ -1,17 +1,16 @@
 import { NextResponse } from 'next/server';
-import connectDB from '@/lib/db';
-import User from '@/models/User';
-import { hashPassword, generateToken } from '@/lib/auth';
+import { supabaseAdmin } from '@/lib/supabase';
 
 export async function POST(request) {
   try {
-    await connectDB();
-
     const body = await request.json();
     const { name, email, password } = body;
 
+    console.log('[REGISTER] Attempting registration for:', email);
+
     // Validation
     if (!name || !email || !password) {
+      console.log('[REGISTER] Missing required fields');
       return NextResponse.json(
         { success: false, message: 'Please provide name, email, and password' },
         { status: 400 }
@@ -25,55 +24,65 @@ export async function POST(request) {
       );
     }
 
-    // Check if user already exists
-    const existingUser = await User.findOne({ email: email.toLowerCase() });
-    if (existingUser) {
+    // Create user in Supabase Auth
+    const { data, error } = await supabaseAdmin.auth.admin.createUser({
+      email: email.toLowerCase().trim(),
+      password,
+      email_confirm: true,
+    });
+
+    if (error) {
+      console.log('[REGISTER] User creation error:', error.message);
+
+      if (error.message.includes('already registered')) {
+        return NextResponse.json(
+          { success: false, message: 'User with this email already exists' },
+          { status: 400 }
+        );
+      }
+
       return NextResponse.json(
-        { success: false, message: 'User with this email already exists' },
+        { success: false, message: error.message },
         { status: 400 }
       );
     }
 
-    // Hash password
-    const hashedPassword = await hashPassword(password);
+    // Store additional user info in profiles table
+    const { error: profileError } = await supabaseAdmin
+      .from('profiles')
+      .insert([
+        {
+          id: data.user.id,
+          email: email.toLowerCase().trim(),
+          name: name.trim(),
+          created_at: new Date().toISOString(),
+        },
+      ]);
 
-    // Create user
-    const user = await User.create({
-      name: name.trim(),
-      email: email.toLowerCase().trim(),
-      password: hashedPassword,
-    });
+    if (profileError) {
+      console.log('[REGISTER] Profile creation error:', profileError.message);
+      return NextResponse.json(
+        { success: false, message: 'Failed to create user profile' },
+        { status: 500 }
+      );
+    }
 
-    // Generate token
-    const token = generateToken({
-      userId: user._id,
-      email: user.email,
-      name: user.name,
-    });
+    console.log('[REGISTER] Registration successful for:', email);
 
     return NextResponse.json(
       {
         success: true,
         message: 'User registered successfully',
-        token,
         user: {
-          id: user._id,
-          name: user.name,
-          email: user.email,
+          id: data.user.id,
+          name: name.trim(),
+          email: data.user.email,
         },
       },
       { status: 201 }
     );
   } catch (error) {
-    console.error('Registration error:', error);
-
-    if (error.code === 11000) {
-      return NextResponse.json(
-        { success: false, message: 'User with this email already exists' },
-        { status: 400 }
-      );
-    }
-
+    console.error('[REGISTER] Registration error:', error.message, error);
     return NextResponse.json(
       { success: false, message: 'Server error during registration' },
       { status: 500 }
