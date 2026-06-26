@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
-import { verifyToken, extractTokenFromHeader } from './auth';
+import { supabaseAdmin } from './supabase';
 
 /**
  * Wrapper function for protected API routes
- * Validates JWT token and attaches user to the request
+ * Validates Supabase token and attaches user to the request
  *
  * @param {Function} handler - The route handler function
  * @returns {Function} Wrapped handler with authentication
@@ -13,35 +13,42 @@ export function withAuth(handler) {
     try {
       // Get authorization header
       const authHeader = request.headers.get('authorization');
-      const token = extractTokenFromHeader(authHeader);
+      console.log('[MIDDLEWARE] Auth header present:', !!authHeader);
 
-      if (!token) {
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        console.log('[MIDDLEWARE] No valid Bearer token');
         return NextResponse.json(
           { success: false, message: 'Access denied. No token provided.' },
           { status: 401 }
         );
       }
 
-      // Verify token
-      const decoded = verifyToken(token);
-      if (!decoded) {
+      const token = authHeader.substring(7);
+
+      // Verify token with Supabase
+      const { data, error } = await supabaseAdmin.auth.getUser(token);
+
+      if (error || !data.user) {
+        console.log('[MIDDLEWARE] Token verification failed:', error?.message);
         return NextResponse.json(
           { success: false, message: 'Invalid or expired token.' },
           { status: 401 }
         );
       }
 
+      console.log('[MIDDLEWARE] Token verified for user:', data.user.email);
+
       // Attach user info to request for use in handlers
       request.user = {
-        userId: decoded.userId,
-        email: decoded.email,
-        name: decoded.name,
+        userId: data.user.id,
+        email: data.user.email,
+        name: data.user.user_metadata?.name || '',
       };
 
       // Call the actual handler
       return handler(request, context);
     } catch (error) {
-      console.error('Auth middleware error:', error);
+      console.error('[MIDDLEWARE] Auth error:', error.message);
       return NextResponse.json(
         { success: false, message: 'Authentication error' },
         { status: 500 }
@@ -60,7 +67,7 @@ export function withPublic(handler) {
     try {
       return handler(request, context);
     } catch (error) {
-      console.error('Handler error:', error);
+      console.error('[HANDLER] Error:', error.message);
       return NextResponse.json(
         { success: false, message: 'Request error' },
         { status: 500 }

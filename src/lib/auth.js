@@ -13,7 +13,13 @@ if (!JWT_SECRET) {
  * @returns {string} JWT token
  */
 export function generateToken(payload) {
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: '7d' });
+  console.log('[AUTH] Generating token with JWT_SECRET length:', JWT_SECRET?.length);
+  if (!JWT_SECRET) {
+    throw new Error('JWT_SECRET is not defined!');
+  }
+  const token = jwt.sign(payload, JWT_SECRET, { expiresIn: '7d' });
+  console.log('[AUTH] Token generated, first 50 chars:', token.substring(0, 50));
+  return token;
 }
 
 /**
@@ -23,9 +29,12 @@ export function generateToken(payload) {
  */
 export function verifyToken(token) {
   try {
-    return jwt.verify(token, JWT_SECRET);
+    console.log('[AUTH] Verifying token with JWT_SECRET length:', JWT_SECRET?.length);
+    const decoded = jwt.verify(token, JWT_SECRET);
+    console.log('[AUTH] Token verified successfully');
+    return decoded;
   } catch (error) {
-    console.error('Token verification failed:', error.message);
+    console.error('[AUTH] Token verification failed:', error.message);
     return null;
   }
 }

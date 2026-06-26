@@ -1,20 +1,26 @@
 import { NextResponse } from 'next/server';
 import { withAuth } from '@/lib/middleware';
-import FamilyMember from '@/models/FamilyMember';
+import { supabaseAdmin } from '@/lib/supabase';
 
 // GET all family members
 async function getHandler(request) {
   try {
     const userId = request.user.userId;
 
-    const familyMembers = await FamilyMember.find({ userId })
-      .sort({ createdAt: -1 })
-      .lean();
+    const { data: familyMembers, error } = await supabaseAdmin
+      .from('family_members')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      throw error;
+    }
 
     return NextResponse.json({
       success: true,
-      count: familyMembers.length,
-      data: familyMembers,
+      count: familyMembers?.length || 0,
+      data: familyMembers || [],
     });
   } catch (error) {
     console.error('Get family members error:', error);
@@ -31,26 +37,32 @@ async function postHandler(request) {
     const userId = request.user.userId;
     const body = await request.json();
 
-    const { name, relation, color, dateOfBirth, bloodGroup, allergies, medicalConditions } = body;
+    const { name, relationship, color } = body;
 
     // Validation
-    if (!name || !relation) {
+    if (!name || !relationship) {
       return NextResponse.json(
-        { success: false, message: 'Please provide name and relation' },
+        { success: false, message: 'Please provide name and relationship' },
         { status: 400 }
       );
     }
 
-    const familyMember = await FamilyMember.create({
-      userId,
-      name: name.trim(),
-      relation,
-      color: color || '#ec4899',
-      dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : undefined,
-      bloodGroup: bloodGroup || undefined,
-      allergies: allergies || undefined,
-      medicalConditions: medicalConditions || undefined,
-    });
+    const { data: familyMember, error } = await supabaseAdmin
+      .from('family_members')
+      .insert([
+        {
+          user_id: userId,
+          name: name.trim(),
+          relationship,
+          color: color || '#ec4899',
+        },
+      ])
+      .select()
+      .single();
+
+    if (error) {
+      throw error;
+    }
 
     return NextResponse.json(
       {

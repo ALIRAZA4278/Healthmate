@@ -69,10 +69,17 @@ export async function POST(request) {
 
     console.log('[REGISTER] Registration successful for:', email);
 
+    // Create a session for the newly registered user
+    const { data: sessionData } = await supabaseAdmin.auth.signInWithPassword({
+      email: email.toLowerCase(),
+      password: password,
+    });
+
     return NextResponse.json(
       {
         success: true,
         message: 'User registered successfully',
+        token: sessionData?.session?.access_token || '',
         user: {
           id: data.user.id,
           name: name.trim(),

@@ -95,7 +95,7 @@ export default function UploadReportPage() {
       const response = await reportsAPI.upload(submitData);
       setSuccess(true);
       setTimeout(() => {
-        router.push(`/dashboard/reports/${response.data.file._id}`);
+        router.push(`/dashboard/reports/${response.data.id}`);
       }, 1500);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Upload failed');
@@ -215,8 +215,8 @@ export default function UploadReportPage() {
                 >
                   <option value="">Self (Default)</option>
                   {familyMembers.map((member) => (
-                    <option key={member._id} value={member._id}>
-                      {member.name} ({member.relation})
+                    <option key={member.id} value={member.id}>
+                      {member.name} ({member.relationship})
                     </option>
                   ))}
                 </select>

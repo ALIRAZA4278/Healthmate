@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { withAuth } from '@/lib/middleware';
-import Vitals from '@/models/Vitals';
+import { supabaseAdmin } from '@/lib/supabase';
 
 // GET all vitals
 async function getHandler(request) {
@@ -8,38 +8,41 @@ async function getHandler(request) {
     const userId = request.user.userId;
     const { searchParams } = new URL(request.url);
 
-    // Build query
-    const query = { userId };
+    let query = supabaseAdmin
+      .from('vitals')
+      .select('*')
+      .eq('user_id', userId);
 
     // Filter by family member
     const familyMemberId = searchParams.get('familyMemberId');
-    if (familyMemberId) {
-      if (familyMemberId === 'self') {
-        query.familyMemberId = { $exists: false };
-      } else {
-        query.familyMemberId = familyMemberId;
-      }
+    if (familyMemberId && familyMemberId !== 'self') {
+      query = query.eq('family_member_id', familyMemberId);
+    } else if (familyMemberId === 'self') {
+      query = query.is('family_member_id', null);
     }
 
     // Filter by date range
     const startDate = searchParams.get('startDate');
     const endDate = searchParams.get('endDate');
-    if (startDate || endDate) {
-      query.date = {};
-      if (startDate) query.date.$gte = new Date(startDate);
-      if (endDate) query.date.$lte = new Date(endDate);
+    if (startDate) {
+      query = query.gte('created_at', startDate);
+    }
+    if (endDate) {
+      query = query.lte('created_at', endDate);
     }
 
-    const vitals = await Vitals.find(query)
-      .populate('familyMemberId', 'name relation color')
-      .sort({ date: -1 })
-      .limit(50)
-      .lean();
+    query = query.order('created_at', { ascending: false });
+
+    const { data: vitals, error } = await query;
+
+    if (error) {
+      throw error;
+    }
 
     return NextResponse.json({
       success: true,
-      count: vitals.length,
-      data: vitals,
+      count: vitals?.length || 0,
+      data: vitals || [],
     });
   } catch (error) {
     console.error('Get vitals error:', error);
@@ -56,55 +59,34 @@ async function postHandler(request) {
     const userId = request.user.userId;
     const body = await request.json();
 
-    const {
-      date,
-      bloodPressure,
-      bloodSugar,
-      weight,
-      heartRate,
-      temperature,
-      oxygenLevel,
-      notes,
-      familyMemberId,
-    } = body;
+    const { heartRate, bloodPressure, temperature, date, familyMemberId } = body;
 
     // Validation
     if (!date) {
       return NextResponse.json(
-        { success: false, message: 'Please provide date' },
+        { success: false, message: 'Please provide a date' },
         { status: 400 }
       );
     }
 
-    // Check if at least one vital is provided
-    const hasVitals =
-      bloodPressure?.systolic ||
-      bloodPressure?.diastolic ||
-      bloodSugar ||
-      weight ||
-      heartRate ||
-      temperature ||
-      oxygenLevel;
+    const { data: vital, error } = await supabaseAdmin
+      .from('vitals')
+      .insert([
+        {
+          user_id: userId,
+          family_member_id: familyMemberId && familyMemberId !== 'self' ? familyMemberId : null,
+          heart_rate: heartRate || null,
+          blood_pressure: bloodPressure || null,
+          temperature: temperature || null,
+          created_at: new Date(date).toISOString(),
+        },
+      ])
+      .select()
+      .single();
 
-    if (!hasVitals) {
-      return NextResponse.json(
-        { success: false, message: 'Please provide at least one vital measurement' },
-        { status: 400 }
-      );
+    if (error) {
+      throw error;
     }
-
-    const vital = await Vitals.create({
-      userId,
-      familyMemberId: familyMemberId && familyMemberId !== 'self' ? familyMemberId : undefined,
-      date: new Date(date),
-      bloodPressure: bloodPressure || undefined,
-      bloodSugar: bloodSugar || undefined,
-      weight: weight || undefined,
-      heartRate: heartRate || undefined,
-      temperature: temperature || undefined,
-      oxygenLevel: oxygenLevel || undefined,
-      notes: notes || undefined,
-    });
 
     return NextResponse.json(
       {

@@ -74,7 +74,7 @@ export default function ViewReportPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({
-          reportId: report._id,
+          reportId: report.id,
           fileUrl: report.fileUrl,
           mimeType: report.fileUrl.toLowerCase().endsWith('.pdf') ? 'application/pdf' : 'image/jpeg',
           fileType: report.fileType,

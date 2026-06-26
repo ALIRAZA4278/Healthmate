@@ -1,8 +1,7 @@
 import { NextResponse } from 'next/server';
 import { withAuth } from '@/lib/middleware';
 import { deleteFromCloudinary } from '@/lib/cloudinary';
-import File from '@/models/File';
-import AiInsight from '@/models/AiInsight';
+import { supabaseAdmin } from '@/lib/supabase';
 
 // GET single report
 async function getHandler(request, { params }) {
@@ -10,25 +9,34 @@ async function getHandler(request, { params }) {
     const userId = request.user.userId;
     const { id } = await params;
 
-    const report = await File.findOne({ _id: id, userId })
-      .populate('familyMemberId', 'name relation color')
-      .lean();
+    const { data: report, error } = await supabaseAdmin
+      .from('reports')
+      .select('*')
+      .eq('id', id)
+      .eq('user_id', userId)
+      .single();
 
-    if (!report) {
+    if (error || !report) {
+      console.error('[REPORT GET] Error:', error?.message, 'id:', id, 'userId:', userId);
       return NextResponse.json(
         { success: false, message: 'Report not found' },
         { status: 404 }
       );
     }
 
-    // Get AI insight
-    const aiInsight = await AiInsight.findOne({ fileId: id }).lean();
-
     return NextResponse.json({
       success: true,
       data: {
-        ...report,
-        aiInsight: aiInsight || null,
+        id: report.id,
+        fileName: report.file_name,
+        fileType: report.file_type,
+        fileUrl: report.file_url,
+        testDate: report.test_date,
+        labHospital: report.lab_hospital,
+        doctor: report.doctor,
+        notes: report.notes,
+        createdAt: report.created_at,
+        aiInsight: report.analysis || null,
       },
     });
   } catch (error) {
@@ -46,9 +54,14 @@ async function deleteHandler(request, { params }) {
     const userId = request.user.userId;
     const { id } = await params;
 
-    const report = await File.findOne({ _id: id, userId });
+    const { data: report, error: fetchError } = await supabaseAdmin
+      .from('reports')
+      .select('cloudinary_public_id')
+      .eq('id', id)
+      .eq('user_id', userId)
+      .single();
 
-    if (!report) {
+    if (fetchError || !report) {
       return NextResponse.json(
         { success: false, message: 'Report not found' },
         { status: 404 }
@@ -56,18 +69,24 @@ async function deleteHandler(request, { params }) {
     }
 
     // Delete from Cloudinary
-    try {
-      await deleteFromCloudinary(report.cloudinaryPublicId);
-    } catch (cloudinaryError) {
-      console.error('Cloudinary delete error:', cloudinaryError);
-      // Continue even if Cloudinary delete fails
+    if (report.cloudinary_public_id) {
+      try {
+        await deleteFromCloudinary(report.cloudinary_public_id);
+      } catch (cloudinaryError) {
+        console.error('Cloudinary delete error:', cloudinaryError);
+      }
     }
 
-    // Delete AI insight
-    await AiInsight.deleteOne({ fileId: id });
+    // Delete report from Supabase
+    const { error: deleteError } = await supabaseAdmin
+      .from('reports')
+      .delete()
+      .eq('id', id)
+      .eq('user_id', userId);
 
-    // Delete file record
-    await File.deleteOne({ _id: id });
+    if (deleteError) {
+      throw deleteError;
+    }
 
     return NextResponse.json({
       success: true,
