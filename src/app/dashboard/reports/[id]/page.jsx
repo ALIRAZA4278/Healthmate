@@ -56,7 +56,13 @@ export default function ViewReportPage() {
       const response = await reportsAPI.getById(params.id);
       const reportData = response.data;
       setReport(reportData);
-      setInsight(reportData?.aiInsight);
+      // Only set insight if it has actual summary content
+      const ai = reportData?.aiInsight;
+      if (ai && ai.summaryEnglish && !ai.summaryEnglish.startsWith('Unable to analyze')) {
+        setInsight(ai);
+      } else {
+        setInsight(null);
+      }
     } catch (error) {
       console.error('Error loading report:', error);
     } finally {
@@ -82,7 +88,12 @@ export default function ViewReportPage() {
       });
       const data = await res.json();
       if (data.success) {
-        setInsight(data.data);
+        const ai = data.data?.analysis || data.data;
+        if (ai && ai.summaryEnglish && !ai.summaryEnglish.startsWith('Unable to analyze')) {
+          setInsight(ai);
+        } else {
+          setAnalyzeError('Analysis did not generate properly. Please try again.');
+        }
       } else {
         setAnalyzeError(data.message || 'Analysis failed. Please try again.');
       }

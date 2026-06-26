@@ -88,26 +88,20 @@ async function handler(request) {
       throw reportError;
     }
 
-    // Analyze with AI (async - don't wait for it)
+    // Run AI analysis
     let aiAnalysis = null;
     try {
       console.log('[UPLOAD] Starting AI analysis...');
       aiAnalysis = await analyzeMedicalReport(buffer, file.type, fileType);
-
-      // Save AI analysis to report
       if (aiAnalysis) {
-        const { error: updateError } = await supabaseAdmin
+        await supabaseAdmin
           .from('reports')
           .update({ analysis: aiAnalysis })
           .eq('id', report.id);
-
-        if (updateError) {
-          console.error('[UPLOAD] Error saving AI analysis:', updateError);
-        }
+        console.log('[UPLOAD] AI analysis saved.');
       }
     } catch (aiError) {
       console.error('[UPLOAD] AI analysis error:', aiError.message);
-      // Continue without AI analysis - it's not critical
     }
 
     console.log('[UPLOAD] Report uploaded successfully');
@@ -121,7 +115,6 @@ async function handler(request) {
           fileName: report.file_name,
           fileUrl: report.file_url,
           testDate: report.test_date,
-          analysis: aiAnalysis,
         },
       },
       { status: 201 }

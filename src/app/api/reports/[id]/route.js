@@ -36,7 +36,9 @@ async function getHandler(request, { params }) {
         doctor: report.doctor,
         notes: report.notes,
         createdAt: report.created_at,
-        aiInsight: report.analysis || null,
+        aiInsight: typeof report.analysis === 'string'
+          ? JSON.parse(report.analysis)
+          : (report.analysis || null),
       },
     });
   } catch (error) {

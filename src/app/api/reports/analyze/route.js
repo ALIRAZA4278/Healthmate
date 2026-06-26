@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { withAuth } from '@/lib/middleware';
-import { analyzeMedicalReport } from '@/lib/gemini';
+import { analyzeMedicalReportFromUrl } from '@/lib/gemini';
 import { supabaseAdmin } from '@/lib/supabase';
 
 async function handler(request) {
@@ -30,17 +30,8 @@ async function handler(request) {
       );
     }
 
-    // Download file from URL
-    const response = await fetch(fileUrl);
-    if (!response.ok) {
-      throw new Error('Failed to download file from storage');
-    }
-    const arrayBuffer = await response.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
-    const resolvedMimeType = mimeType || response.headers.get('content-type') || 'image/jpeg';
-
-    // Run AI analysis
-    const aiAnalysis = await analyzeMedicalReport(buffer, resolvedMimeType, fileType || 'lab_report');
+    // Run AI analysis from URL
+    const aiAnalysis = await analyzeMedicalReportFromUrl(fileUrl, fileType || 'lab_report');
 
     // Save analysis to database
     const { data: insight, error: insertError } = await supabaseAdmin
@@ -61,7 +52,7 @@ async function handler(request) {
     return NextResponse.json({
       success: true,
       message: 'Analysis complete',
-      data: insight,
+      data: { analysis: aiAnalysis },
     });
   } catch (error) {
     console.error('Analyze error:', error);
