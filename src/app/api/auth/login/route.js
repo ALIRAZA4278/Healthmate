@@ -33,14 +33,35 @@ export async function POST(request) {
 
     console.log('[LOGIN] User authenticated:', email);
 
-    // Get user profile
-    const { data: profile, error: profileError } = await supabaseAdmin
+    // Get user profile, create if doesn't exist
+    let { data: profile, error: profileError } = await supabaseAdmin
       .from('profiles')
       .select('*')
       .eq('id', data.user.id)
       .single();
 
-    if (profileError) {
+    if (profileError && profileError.code === 'PGRST116') {
+      // Profile doesn't exist, create it
+      console.log('[LOGIN] Creating profile for:', email);
+      const { data: newProfile, error: createError } = await supabaseAdmin
+        .from('profiles')
+        .insert([
+          {
+            id: data.user.id,
+            email: email.toLowerCase(),
+            name: email.split('@')[0],
+          },
+        ])
+        .select()
+        .single();
+
+      if (createError) {
+        console.log('[LOGIN] Profile creation error:', createError.message);
+        profile = { id: data.user.id, email, name: email.split('@')[0] };
+      } else {
+        profile = newProfile;
+      }
+    } else if (profileError) {
       console.log('[LOGIN] Profile fetch error:', profileError.message);
       return NextResponse.json(
         { success: false, message: 'Failed to load user profile' },
