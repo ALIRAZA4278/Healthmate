@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { withAuth } from '@/lib/middleware';
-import File from '@/models/File';
-import AiInsight from '@/models/AiInsight';
+import { supabaseAdmin } from '@/lib/supabase';
 
 async function handler(request) {
   try {
@@ -9,54 +8,46 @@ async function handler(request) {
     const { searchParams } = new URL(request.url);
 
     // Build query filters
-    const query = { userId };
+    let query = supabaseAdmin.from('reports').select('*').eq('user_id', userId);
 
     // Filter by family member
     const familyMemberId = searchParams.get('familyMemberId');
-    if (familyMemberId) {
-      if (familyMemberId === 'self') {
-        query.familyMemberId = { $exists: false };
-      } else {
-        query.familyMemberId = familyMemberId;
-      }
+    if (familyMemberId && familyMemberId !== 'self') {
+      query = query.eq('family_member_id', familyMemberId);
+    } else if (familyMemberId === 'self') {
+      query = query.is('family_member_id', null);
     }
 
     // Filter by date range
     const startDate = searchParams.get('startDate');
     const endDate = searchParams.get('endDate');
-    if (startDate || endDate) {
-      query.testDate = {};
-      if (startDate) query.testDate.$gte = new Date(startDate);
-      if (endDate) query.testDate.$lte = new Date(endDate);
+    if (startDate) {
+      query = query.gte('created_at', startDate);
+    }
+    if (endDate) {
+      query = query.lte('created_at', endDate);
     }
 
     // Filter by file type
     const fileType = searchParams.get('fileType');
     if (fileType) {
-      query.fileType = fileType;
+      query = query.eq('file_type', fileType);
     }
 
-    // Fetch reports with AI insights
-    const reports = await File.find(query)
-      .populate('familyMemberId', 'name relation color')
-      .sort({ testDate: -1 })
-      .lean();
+    // Order by date descending
+    query = query.order('created_at', { ascending: false });
 
-    // Get AI insights for each report
-    const reportsWithInsights = await Promise.all(
-      reports.map(async (report) => {
-        const aiInsight = await AiInsight.findOne({ fileId: report._id }).lean();
-        return {
-          ...report,
-          aiInsight: aiInsight || null,
-        };
-      })
-    );
+    // Execute query
+    const { data: reports, error } = await query;
+
+    if (error) {
+      throw error;
+    }
 
     return NextResponse.json({
       success: true,
-      count: reportsWithInsights.length,
-      data: reportsWithInsights,
+      count: reports?.length || 0,
+      data: reports || [],
     });
   } catch (error) {
     console.error('Get reports error:', error);

@@ -1,8 +1,7 @@
 import { NextResponse } from 'next/server';
 import { withAuth } from '@/lib/middleware';
-import { analyzeMedicalReport } from '@/lib/openai';
-import File from '@/models/File';
-import AiInsight from '@/models/AiInsight';
+import { analyzeMedicalReport } from '@/lib/gemini';
+import { supabaseAdmin } from '@/lib/supabase';
 
 async function handler(request) {
   try {
@@ -17,15 +16,21 @@ async function handler(request) {
     }
 
     // Verify the report belongs to this user
-    const report = await File.findOne({ _id: reportId, userId }).lean();
-    if (!report) {
+    const { data: report, error: reportError } = await supabaseAdmin
+      .from('reports')
+      .select('*')
+      .eq('id', reportId)
+      .eq('user_id', userId)
+      .single();
+
+    if (reportError || !report) {
       return NextResponse.json(
         { success: false, message: 'Report not found' },
         { status: 404 }
       );
     }
 
-    // Download file from Cloudinary URL
+    // Download file from URL
     const response = await fetch(fileUrl);
     if (!response.ok) {
       throw new Error('Failed to download file from storage');
@@ -37,28 +42,21 @@ async function handler(request) {
     // Run AI analysis
     const aiAnalysis = await analyzeMedicalReport(buffer, resolvedMimeType, fileType || 'lab_report');
 
-    // Delete old insight if exists
-    await AiInsight.deleteOne({ fileId: reportId });
+    // Save analysis to database
+    const { data: insight, error: insertError } = await supabaseAdmin
+      .from('reports')
+      .update({
+        analysis: aiAnalysis,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', reportId)
+      .eq('user_id', userId)
+      .select()
+      .single();
 
-    // Save new insight
-    const insight = await AiInsight.create({
-      fileId: reportId,
-      userId,
-      urgencyLevel: aiAnalysis.urgencyLevel || 'normal',
-      urgencyReason: aiAnalysis.urgencyReason || '',
-      summaryEnglish: aiAnalysis.summaryEnglish,
-      summaryUrdu: aiAnalysis.summaryUrdu,
-      keyFindings: aiAnalysis.keyFindings || [],
-      abnormalValues: aiAnalysis.abnormalValues || [],
-      normalValues: aiAnalysis.normalValues || [],
-      questionsToAsk: aiAnalysis.questionsToAsk || [],
-      foodRecommendations: aiAnalysis.foodRecommendations || { avoid: [], recommended: [] },
-      homeRemedies: aiAnalysis.homeRemedies || [],
-      lifestyleRecommendations: aiAnalysis.lifestyleRecommendations || [],
-      warningSignsToWatch: aiAnalysis.warningSignsToWatch || [],
-      followUpRecommendations: aiAnalysis.followUpRecommendations || '',
-      disclaimer: aiAnalysis.disclaimer,
-    });
+    if (insertError) {
+      throw insertError;
+    }
 
     return NextResponse.json({
       success: true,
@@ -66,7 +64,7 @@ async function handler(request) {
       data: insight,
     });
   } catch (error) {
-    console.error('Re-analyze error:', error);
+    console.error('Analyze error:', error);
     return NextResponse.json(
       { success: false, message: 'Analysis failed: ' + error.message },
       { status: 500 }

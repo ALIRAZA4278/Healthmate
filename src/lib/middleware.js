@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 import { verifyToken, extractTokenFromHeader } from './auth';
-import connectDB from './db';
 
 /**
  * Wrapper function for protected API routes
@@ -12,9 +11,6 @@ import connectDB from './db';
 export function withAuth(handler) {
   return async (request, context) => {
     try {
-      // Connect to database
-      await connectDB();
-
       // Get authorization header
       const authHeader = request.headers.get('authorization');
       const token = extractTokenFromHeader(authHeader);
@@ -55,19 +51,18 @@ export function withAuth(handler) {
 }
 
 /**
- * Simple database connection wrapper for public routes
+ * Simple wrapper for public routes (no auth required)
  * @param {Function} handler - The route handler function
- * @returns {Function} Wrapped handler with database connection
+ * @returns {Function} Wrapped handler
  */
-export function withDB(handler) {
+export function withPublic(handler) {
   return async (request, context) => {
     try {
-      await connectDB();
       return handler(request, context);
     } catch (error) {
-      console.error('Database connection error:', error);
+      console.error('Handler error:', error);
       return NextResponse.json(
-        { success: false, message: 'Database connection error' },
+        { success: false, message: 'Request error' },
         { status: 500 }
       );
     }

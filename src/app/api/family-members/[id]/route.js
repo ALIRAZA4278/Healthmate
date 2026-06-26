@@ -1,8 +1,6 @@
 import { NextResponse } from 'next/server';
 import { withAuth } from '@/lib/middleware';
-import FamilyMember from '@/models/FamilyMember';
-import File from '@/models/File';
-import Vitals from '@/models/Vitals';
+import { supabaseAdmin } from '@/lib/supabase';
 
 // GET single family member
 async function getHandler(request, { params }) {
@@ -10,9 +8,14 @@ async function getHandler(request, { params }) {
     const userId = request.user.userId;
     const { id } = await params;
 
-    const familyMember = await FamilyMember.findOne({ _id: id, userId }).lean();
+    const { data: familyMember, error } = await supabaseAdmin
+      .from('family_members')
+      .select('*')
+      .eq('id', id)
+      .eq('user_id', userId)
+      .single();
 
-    if (!familyMember) {
+    if (error || !familyMember) {
       return NextResponse.json(
         { success: false, message: 'Family member not found' },
         { status: 404 }
@@ -20,20 +23,27 @@ async function getHandler(request, { params }) {
     }
 
     // Get reports count
-    const reportsCount = await File.countDocuments({ familyMemberId: id });
+    const { count: reportsCount } = await supabaseAdmin
+      .from('reports')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', userId)
+      .eq('family_member_id', id);
 
     // Get recent vitals
-    const recentVitals = await Vitals.find({ familyMemberId: id })
-      .sort({ date: -1 })
-      .limit(10)
-      .lean();
+    const { data: recentVitals } = await supabaseAdmin
+      .from('vitals')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('family_member_id', id)
+      .order('created_at', { ascending: false })
+      .limit(10);
 
     return NextResponse.json({
       success: true,
       data: {
         ...familyMember,
-        reportsCount,
-        recentVitals,
+        reportsCount: reportsCount || 0,
+        recentVitals: recentVitals || [],
       },
     });
   } catch (error) {
@@ -52,32 +62,47 @@ async function putHandler(request, { params }) {
     const { id } = await params;
     const body = await request.json();
 
-    const familyMember = await FamilyMember.findOne({ _id: id, userId });
+    // Verify ownership
+    const { data: familyMember, error: fetchError } = await supabaseAdmin
+      .from('family_members')
+      .select('*')
+      .eq('id', id)
+      .eq('user_id', userId)
+      .single();
 
-    if (!familyMember) {
+    if (fetchError || !familyMember) {
       return NextResponse.json(
         { success: false, message: 'Family member not found' },
         { status: 404 }
       );
     }
 
-    const { name, relation, color, dateOfBirth, bloodGroup, allergies, medicalConditions } = body;
+    const { name, relationship, color } = body;
 
-    // Update fields
-    if (name) familyMember.name = name.trim();
-    if (relation) familyMember.relation = relation;
-    if (color) familyMember.color = color;
-    if (dateOfBirth !== undefined) familyMember.dateOfBirth = dateOfBirth ? new Date(dateOfBirth) : undefined;
-    if (bloodGroup !== undefined) familyMember.bloodGroup = bloodGroup || undefined;
-    if (allergies !== undefined) familyMember.allergies = allergies || undefined;
-    if (medicalConditions !== undefined) familyMember.medicalConditions = medicalConditions || undefined;
+    const updates = {
+      updated_at: new Date().toISOString(),
+    };
 
-    await familyMember.save();
+    if (name) updates.name = name.trim();
+    if (relationship) updates.relationship = relationship;
+    if (color) updates.color = color;
+
+    const { data: updated, error } = await supabaseAdmin
+      .from('family_members')
+      .update(updates)
+      .eq('id', id)
+      .eq('user_id', userId)
+      .select()
+      .single();
+
+    if (error) {
+      throw error;
+    }
 
     return NextResponse.json({
       success: true,
       message: 'Family member updated successfully',
-      data: familyMember,
+      data: updated,
     });
   } catch (error) {
     console.error('Update family member error:', error);
@@ -94,32 +119,31 @@ async function deleteHandler(request, { params }) {
     const userId = request.user.userId;
     const { id } = await params;
 
-    const familyMember = await FamilyMember.findOne({ _id: id, userId });
+    // Verify ownership
+    const { data: familyMember, error: fetchError } = await supabaseAdmin
+      .from('family_members')
+      .select('*')
+      .eq('id', id)
+      .eq('user_id', userId)
+      .single();
 
-    if (!familyMember) {
+    if (fetchError || !familyMember) {
       return NextResponse.json(
         { success: false, message: 'Family member not found' },
         { status: 404 }
       );
     }
 
-    // Check if family member has associated reports or vitals
-    const reportsCount = await File.countDocuments({ familyMemberId: id });
-    const vitalsCount = await Vitals.countDocuments({ familyMemberId: id });
+    // Delete (cascading deletes should handle related records if set up in Supabase)
+    const { error } = await supabaseAdmin
+      .from('family_members')
+      .delete()
+      .eq('id', id)
+      .eq('user_id', userId);
 
-    if (reportsCount > 0 || vitalsCount > 0) {
-      // Option 1: Prevent deletion (uncomment to use)
-      // return NextResponse.json(
-      //   { success: false, message: 'Cannot delete family member with associated reports or vitals' },
-      //   { status: 400 }
-      // );
-
-      // Option 2: Remove family member reference from associated records
-      await File.updateMany({ familyMemberId: id }, { $unset: { familyMemberId: 1 } });
-      await Vitals.updateMany({ familyMemberId: id }, { $unset: { familyMemberId: 1 } });
+    if (error) {
+      throw error;
     }
-
-    await FamilyMember.deleteOne({ _id: id });
 
     return NextResponse.json({
       success: true,
